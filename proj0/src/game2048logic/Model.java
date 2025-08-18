@@ -85,6 +85,13 @@ public class Model {
      * */
     public boolean emptySpaceExists() {
         // TODO: Task 2. Fill in this function.
+        for(int i=0; i<4 ;i++){
+            for(int j=0; j<4 ;j++) {
+                if (board.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -95,6 +102,13 @@ public class Model {
      */
     public boolean maxTileExists() {
         // TODO: Task 3. Fill in this function.
+        for(int i=0; i<4 ;i++){
+            for(int j=0; j<4 ;j++) {
+                if (board.tile(i, j)!=null && board.tile(i, j).value()== MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -105,13 +119,24 @@ public class Model {
      * 2. There are two adjacent tiles with the same value.
      */
     public boolean atLeastOneMoveExists() {
-        // TODO: Fill in this function.
+        for(int i=0; i<4 ;i++){
+            for(int j=0; j<4 ;j++){
+                if(board.tile(i,j)==null){
+                    return true;
+                }
+                if(i >1 && board.tile(i-1,j).value()==board.tile(i,j).value()){
+                    return true;
+                }
+                if(j >1 && board.tile(i,j).value()==board.tile(i,j-1).value()){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     /**
      * Moves the tile at position (x, y) as far up as possible.
-     *
      * Rules for Tilt:
      * 1. If two Tiles are adjacent in the direction of motion and have
      *    the same value, they are merged into one Tile of twice the original
@@ -125,8 +150,20 @@ public class Model {
      */
     public void moveTileUpAsFarAsPossible(int x, int y) {
         Tile currTile = board.tile(x, y);
-        int myValue = currTile.value();
+        if(currTile==null)return;
         int targetY = y;
+        for(int h = targetY+1;h<4 ;h++ ){
+            if(board.tile(x,h)==null){
+                board.move(x,h,board.tile(x,targetY));
+                targetY++;
+                continue;
+            }
+            if(board.tile(x,targetY).value()==board.tile(x,h).value()&&!board.tile(x,h).wasMerged()){
+                board.move(x,h,board.tile(x,targetY));
+                score+=board.tile(x,h).value();
+                break;
+            }
+        }
 
         // TODO: Tasks 5, 6, and 10. Fill in this function.
     }
@@ -137,10 +174,18 @@ public class Model {
      * so we are tilting the tiles in this column up.
      * */
     public void tiltColumn(int x) {
+        for(int i=3;i>=0;i--){
+            moveTileUpAsFarAsPossible(x,i);
+        }
         // TODO: Task 7. Fill in this function.
     }
 
     public void tilt(Side side) {
+        board.setViewingPerspective(side);
+        for(int i=0;i<4;i++){
+            tiltColumn(i);
+        }
+        board.setViewingPerspective(Side.NORTH);
         // TODO: Tasks 8 and 9. Fill in this function.
     }
 
