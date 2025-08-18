@@ -156,12 +156,13 @@ public class Model {
             if(board.tile(x,h)==null){
                 board.move(x,h,board.tile(x,targetY));
                 targetY++;
-                continue;
+            }else if(board.tile(x,targetY).value()!=board.tile(x,h).value()||board.tile(x,h).wasMerged()){
+                return;
             }
-            if(board.tile(x,targetY).value()==board.tile(x,h).value()&&!board.tile(x,h).wasMerged()){
+            else{
                 board.move(x,h,board.tile(x,targetY));
                 score+=board.tile(x,h).value();
-                break;
+                return;
             }
         }
 
