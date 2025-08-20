@@ -23,7 +23,7 @@ public class Arithmetic {
         return a + b;
     }
     /**
-     * test local
+     * test github
      **/
     public static void main(String[] args) {
         System.out.println("Give me a number! (no decimals, please)");
