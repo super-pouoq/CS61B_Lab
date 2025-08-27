@@ -1,6 +1,8 @@
 package ngrams;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -30,15 +32,22 @@ public class TimeSeries extends TreeMap<Integer, Double> {
      */
     public TimeSeries(TimeSeries ts, int startYear, int endYear) {
         super();
-        // TODO: Fill in this constructor.
+        for (Integer year : ts.keySet()) {
+            if (year >= startYear && year <= endYear) {
+                this.put(year, ts.get(year));
+            }
+        }
     }
 
     /**
      * Returns all years for this TimeSeries (in any order).
      */
     public List<Integer> years() {
-        // TODO: Fill in this method.
-        return null;
+        List<Integer> return_list=new ArrayList<>();
+        for (Integer year : this.keySet()) {
+            return_list.add(year);
+        }
+        return return_list;
     }
 
     /**
@@ -46,8 +55,11 @@ public class TimeSeries extends TreeMap<Integer, Double> {
      * Must be in the same order as years().
      */
     public List<Double> data() {
-        // TODO: Fill in this method.
-        return null;
+        List<Double> return_list=new ArrayList<>();
+        for (Double values  : this.values()) {
+            return_list.add(values);
+        }
+        return return_list;
     }
 
     /**
@@ -60,8 +72,26 @@ public class TimeSeries extends TreeMap<Integer, Double> {
      * should store the value from the TimeSeries that contains that year.
      */
     public TimeSeries plus(TimeSeries ts) {
-        // TODO: Fill in this method.
-        return null;
+        TimeSeries result = new TimeSeries();
+
+        // 先把 this 的所有数据放进去
+        for (Map.Entry<Integer, Double> entry : this.entrySet()) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        // 再加上 ts 的数据
+        for (Map.Entry<Integer, Double> entry : ts.entrySet()) {
+            Integer year = entry.getKey();
+            Double value = entry.getValue();
+
+            if (result.containsKey(year)) {
+                result.put(year, result.get(year) + value);
+            } else {
+                result.put(year, value);
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -74,8 +104,26 @@ public class TimeSeries extends TreeMap<Integer, Double> {
      * If TS has a year that is not in this TimeSeries, ignore it.
      */
     public TimeSeries dividedBy(TimeSeries ts) {
-        // TODO: Fill in this method.
-        return null;
+        TimeSeries result = new TimeSeries();
+
+        // 先把 this 的所有数据放进去
+        for (Map.Entry<Integer, Double> entry : this.entrySet()) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        // 再加上 ts 的数据
+        for (Map.Entry<Integer, Double> entry : ts.entrySet()) {
+            Integer year = entry.getKey();
+            Double value = entry.getValue();
+
+            if (this.containsKey(year)) {
+                result.put(year, result.get(year)/value);
+            }
+
+
+        }
+
+        return result;
     }
 
     // TODO: Add any private helper methods.
