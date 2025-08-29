@@ -50,7 +50,10 @@ public class RedBlackTree<T extends Comparable<T>> {
      * @param node
      */
     void flipColors(RBTreeNode<T> node) {
-        // TODO: YOUR CODE HERE
+            node.isBlack=!node.isBlack;
+            node.left.isBlack=!node.left.isBlack;
+            node.right.isBlack=!node.right.isBlack;
+
     }
 
     /**
@@ -61,8 +64,13 @@ public class RedBlackTree<T extends Comparable<T>> {
      * @return
      */
     RBTreeNode<T> rotateRight(RBTreeNode<T> node) {
-        // TODO: YOUR CODE HERE
-        return null;
+        boolean temp = node.isBlack;
+        node.isBlack = node.left.isBlack;
+        node.left.isBlack = temp;
+        RBTreeNode<T> temp_node=node.left;
+        node.left=temp_node.right;
+        temp_node.right=node;
+        return temp_node;
     }
 
     /**
@@ -73,8 +81,13 @@ public class RedBlackTree<T extends Comparable<T>> {
      * @return
      */
     RBTreeNode<T> rotateLeft(RBTreeNode<T> node) {
-        // TODO: YOUR CODE HERE
-        return null;
+        boolean temp = node.isBlack;
+        node.isBlack = node.right.isBlack;
+        node.right.isBlack = temp;
+        RBTreeNode<T> temp_node=node.right;
+        node.right=temp_node.left;
+        temp_node.left=node;
+        return temp_node;
     }
 
     /**
@@ -93,6 +106,7 @@ public class RedBlackTree<T extends Comparable<T>> {
      */
     public void insert(T item) {
         root = insert(root, item);
+        if(isRed(root))root.isBlack=true;
         root.isBlack = true;
     }
 
@@ -105,17 +119,27 @@ public class RedBlackTree<T extends Comparable<T>> {
      * @return
      */
     private RBTreeNode<T> insert(RBTreeNode<T> node, T item) {
-        // TODO: Insert (return) new red leaf node.
+        if (node == null) {
+            return new RBTreeNode<>(false, item, null, null);
+        }
 
-        // TODO: Handle normal binary search tree insertion.
+        if (item.compareTo(node.item) <= 0) {
+            node.left = insert(node.left, item);
+        } else if (item.compareTo(node.item) > 0) {
+            node.right = insert(node.right, item);
+        }
 
-        // TODO: Rotate left operation
+        if (isRed(node.right) && !isRed(node.left)) {
+            node = rotateLeft(node);
+        }
+        if (isRed(node.left) && isRed(node.left.left)) {
+            node = rotateRight(node);
+        }
+        if (isRed(node.left) && isRed(node.right)) {
+            flipColors(node);
+        }
 
-        // TODO: Rotate right operation
-
-        // TODO: Color flip
-
-        return null; //fix this return statement
+        return node;
     }
 
 }
