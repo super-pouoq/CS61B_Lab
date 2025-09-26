@@ -24,7 +24,7 @@ public class Main {
             {0, 0, 8, 0},
             {8, 64, 0, 128},
             {4, 64, 8, 256},
-    }, 0);
+    }, 0);//
 
     public static void main(String[] args) {
         Model model = USE_CUSTOM_START ? CUSTOM_START : new Model(BOARD_SIZE);
