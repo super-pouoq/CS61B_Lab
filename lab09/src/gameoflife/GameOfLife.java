@@ -368,7 +368,7 @@ public class GameOfLife {
             TETile[][] board = new TETile[height][width];
 
             // 从第二行开始解析每一行的 0/1 数据
-            for (int i = 0; i < height; i++) {
+            for (int i = 0; i < height; i++) {//
                 String rowStr = lines.get(i + 1).trim();
                 for (int j = 0; j < width; j++) {
                     char c = rowStr.charAt(j);
