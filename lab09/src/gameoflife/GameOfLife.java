@@ -1,12 +1,20 @@
 package gameoflife;
 
 import edu.princeton.cs.algs4.StdDraw;
+import jdk.internal.foreign.StringSupport;
 import tileengine.TERenderer;
 import tileengine.TETile;
 import tileengine.Tileset;
-import utils.FileUtils;
 
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -106,7 +114,7 @@ public class GameOfLife {
             }
             y--;
         }
-        return rotateMatrix;
+        return rotateMatrix;//上下颠倒
     }
 
     /**
@@ -237,15 +245,43 @@ public class GameOfLife {
         // The board is filled with Tileset.NOTHING
         fillWithNothing(nextGen);
 
-        // TODO: Implement this method so that the described transitions occur.
-        // TODO: The current state is represented by TETiles[][] tiles and the next
-        // TODO: state/evolution should be returned in TETile[][] nextGen.
+        for(int i=0;i<width;i++) {
+            for (int j = 0; j < height; j++) {
+                if (tiles[i][j].equals(Tileset.NOTHING)) {
+                    int sum = countNeighbors(tiles, i, j, width, height);
+                    if (sum == 3) {
+                        nextGen[i][j] = Tileset.CELL;
+                    }
+                }
+                if (tiles[i][j].equals(Tileset.CELL)) {
+                    int sum = countNeighbors(tiles, i, j, width, height);
+                    if (sum == 3 || sum == 2) {
+                        nextGen[i][j] = Tileset.CELL;
+                    }
+                }
+            }
+        }
+        //DONE
+        return nextGen;
+    }
 
+    private int countNeighbors(TETile[][] tiles,int x,int y,int width,int height){
+        int sum = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                int nx = x + dx;
+                int ny = y + dy;
+                if (dx == 0 && dy == 0) continue;
 
-
-
-        // TODO: Returns the next evolution in TETile[][] nextGen.
-        return null;
+                // 检查是否在 [0, width) × [0, height) 范围内
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    if (Tileset.CELL.equals(tiles[nx][ny])) {
+                        sum++;
+                    }
+                }
+            }
+        }
+        return sum;
     }
 
     /**
@@ -266,20 +302,42 @@ public class GameOfLife {
      * 0 represents NOTHING, 1 represents a CELL.
      */
     public void saveBoard() {
-        // TODO: Save the dimensions of the board into the first line of the file.
-        // TODO: The width and height should be separated by a space, and end with "\n".
+        try {
+            List<String> lines = new ArrayList<>();
+            TETile[][] haha=flip(this.currentState);
+            // 第一行：width height
+            lines.add(this.width + " " + this.height);
 
+            // 逐行遍历 currentState
+            for (int i = 0; i < this.height; i++) {
+                StringBuilder line = new StringBuilder();
+                for (int j = 0; j < this.width; j++) {
+                    if (haha[j][i].equals(Tileset.NOTHING)) {
+                        line.append('0');
+                    } else if (haha[j][i].equals(Tileset.CELL)) {
+                        line.append('1');
+                    } else {
+                        // 可选：处理未知图块（根据需求决定是否保留）
+                        line.append('0'); // 默认当作 NOTHING
+                    }
+                }
+                lines.add(line.toString());
+            }
 
+            Path savePath = Paths.get(SAVE_FILE);
+            Files.write(
+                    savePath,
+                    lines,
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
+            );
 
-        // TODO: Save the current state of the board into save.txt. You should
-        // TODO: use the provided FileUtils functions to help you. Make sure
-        // TODO: the orientation is correct! Each line in the board should
-        // TODO: end with a new line character.
-
-
-
-
-
+        } catch (IOException e) {
+            System.err.println("保存游戏板失败: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -287,25 +345,49 @@ public class GameOfLife {
      * 0 represents NOTHING, 1 represents a CELL.
      */
     public TETile[][] loadBoard(String filename) {
-        // TODO: Read in the file.
+        try {
+            // 读取所有行
+            List<String> lines = Files.readAllLines(Paths.get(filename), StandardCharsets.UTF_8);
 
-        // TODO: Split the file based on the new line character.
+            if (lines.isEmpty()) {
+                throw new IOException("文件为空");
+            }
 
-        // TODO: Grab and set the dimensions from the first line.
+            // 解析第一行：width 和 height
+            String[] dims = lines.get(0).trim().split("\\s+");
+            if (dims.length < 2) {
+                throw new IOException("第一行格式错误：应为 'width height'");
+            }
 
-        // TODO: Create a TETile[][] to load the board from the file into
-        // TODO: and any additional variables that you think might help.
+            int width = Integer.parseInt(dims[0]);
+            int height = Integer.parseInt(dims[1]);
+            this.width = width;
+            this.height = height;
 
+            // 创建 TETile 二维数组
+            TETile[][] board = new TETile[height][width];
 
-        // TODO: Load the state of the board from the given filename. You can
-        // TODO: use the provided builder variable to help you and FileUtils
-        // TODO: functions. Make sure the orientation is correct!
+            // 从第二行开始解析每一行的 0/1 数据
+            for (int i = 0; i < height; i++) {
+                String rowStr = lines.get(i + 1).trim();
+                for (int j = 0; j < width; j++) {
+                    char c = rowStr.charAt(j);
+                    if (c == '0') {
+                        board[j][i] = Tileset.NOTHING;
+                    } else if (c == '1') {
+                        board[j][i] = Tileset.CELL;
+                    }
+                }
+            }
 
+            // ✅ 根据你的代码逻辑，需要 flip
+            return flip(board);
 
-
-
-        // TODO: Return the board you loaded. Replace/delete this line.
-        return null;
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("加载存档失败: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
