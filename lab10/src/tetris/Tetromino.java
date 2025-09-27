@@ -1,6 +1,7 @@
 package tetris;
 
 import tileengine.TETile;
+import tileengine.Tileset;
 
 import java.awt.*;
 
@@ -48,7 +49,7 @@ public enum Tetromino {
             {false, false, false}
     });
 
-    private final TETile tile;
+    final TETile tile;
     boolean[][] shape;
     int width;
     int height;
@@ -94,12 +95,21 @@ public enum Tetromino {
             }
         }
     }
+    public static void clear(Tetromino t, TETile[][] board, int bx, int by) {
+        for (int tx = 0; tx < t.width; tx++) {
+            for (int ty = 0; ty < t.height; ty++) {
+                if (t.shape[tx][ty]) {
+                    board[bx + tx][by + ty] = Tileset.NOTHING; // 或者其他空白tile
+                }
+            }
+        }
+    }
 
     /**
      * Sets the point of a Tetromino to (3, 20), specifically for spawning.
      */
     public void reset() {
-        this.pos = new Point(3, 20);
+        this.pos = new Point(4, 20);
     }
 
 }

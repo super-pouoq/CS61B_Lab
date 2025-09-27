@@ -3,6 +3,10 @@ package tetris;
 import tileengine.TETile;
 import tileengine.Tileset;
 
+import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  *  Provides the logic for movement of Tetris pieces.
  *
@@ -48,14 +52,15 @@ public class Movement {
         Tetromino t = tetris.getCurrentTetromino();
 
         if (canMove(deltaX, deltaY)) {
+            Tetromino.clear(t, tetris.getBoard(), t.pos.x, t.pos.y);
             t.pos.x += deltaX;
             t.pos.y += deltaY;
+            Tetromino.draw(t, tetris.getBoard(), t.pos.x, t.pos.y);
         } else {
             if (deltaY < 0) {
                 TETile[][] board = tetris.getBoard();
                 Tetromino.draw(t, board, t.pos.x, t.pos.y);
                 tetris.fillAux();
-
                 tetris.setAuxTrue();
                 tetris.setCurrentTetromino();
             }
@@ -75,19 +80,39 @@ public class Movement {
         for (int tx = 0; tx < t.width; tx++){
             for (int ty = 0; ty < t.height; ty++){
                 if (t.shape[tx][ty]) {
+                    int oldX = t.pos.x + tx;
+                    int oldY = t.pos.y + ty;
+                    int newX = oldX + deltaX;
+                    int newY = oldY + deltaY;
 
                     // Out of bounds check
-                    if (t.pos.x + tx + deltaX >= WIDTH ||
-                            t.pos.x + tx + deltaX < 0 ||
-                            t.pos.y + ty + deltaY >= GAME_HEIGHT ||
-                            t.pos.y + ty + deltaY < 0) {
+                    if (newX >= WIDTH || newX < 0 || newY >= GAME_HEIGHT || newY < 0) {
                         return false;
                     }
 
-                    // Board check
+                    // Board check - exclude current tetromino's position
                     TETile[][] board = tetris.getBoard();
-                    if (board[t.pos.x + tx + deltaX][t.pos.y + ty + deltaY] != Tileset.NOTHING) {
-                        return false;
+                    if (board[newX][newY] != Tileset.NOTHING) {
+                        // Check if this occupied tile is part of the current tetromino
+                        boolean isPartOfCurrentTetromino = false;
+                        for (int ttx = 0; ttx < t.width; ttx++) {
+                            for (int tty = 0; tty < t.height; tty++) {
+                                if (t.shape[ttx][tty]) {
+                                    int checkX = t.pos.x + ttx;
+                                    int checkY = t.pos.y + tty;
+                                    if (checkX == newX && checkY == newY) {
+                                        isPartOfCurrentTetromino = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (isPartOfCurrentTetromino) break;
+                        }
+
+                        // Only return false if it's not part of current tetromino
+                        if (!isPartOfCurrentTetromino) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -104,14 +129,15 @@ public class Movement {
         Tetromino t = tetris.getCurrentTetromino();
 
         if (canMove(0, -1)) {
+            Tetromino.clear(t, tetris.getBoard(), t.pos.x, t.pos.y);
             t.pos.y -= 1;
+            Tetromino.draw(t, tetris.getBoard(), t.pos.x, t.pos.y);
         } else {
             TETile[][] board = tetris.getBoard();
             Tetromino.draw(t, board, t.pos.x, t.pos.y);
             tetris.fillAux();
-
-            tetris.setAuxTrue();
             tetris.setCurrentTetromino();
+            tetris.setAuxTrue();
         }
     }
 
@@ -124,20 +150,41 @@ public class Movement {
      */
     public boolean canRotate(boolean[][] newShape) {
         Tetromino t = tetris.getCurrentTetromino();
-        boolean valid = true;
+
+        // 获取当前方块占用的所有位置
+        Set<Point> currentPositions = new HashSet<>();
+        for (int tx = 0; tx < t.width; tx++) {
+            for (int ty = 0; ty < t.height; ty++) {
+                if (t.shape[tx][ty]) {
+                    currentPositions.add(new Point(t.pos.x + tx, t.pos.y + ty));
+                }
+            }
+        }
+
+        // 检查新形状的每个部分
         for (int tx = 0; tx < newShape.length; tx++) {
             for (int ty = 0; ty < newShape[0].length; ty++) {
                 if (newShape[tx][ty]) {
-                    if (t.pos.x + tx < 0 || t.pos.y + ty < 0
-                            || t.pos.x + tx >= tetris.getAuxiliary().length
-                            || t.pos.y + ty >= tetris.getAuxiliary()[0].length
-                            || tetris.getAuxiliary()[t.pos.x + tx][t.pos.y + ty] != Tileset.NOTHING) {
-                        valid = false;
+                    int newX = t.pos.x + tx;
+                    int newY = t.pos.y + ty;
+
+                    // 边界检查
+                    if (newX < 0 || newY < 0
+                            || newX >= tetris.getAuxiliary().length
+                            || newY >= tetris.getAuxiliary()[0].length) {
+                        return false;
+                    }
+
+                    // 检查board，但排除当前方块原有的位置
+                    if (tetris.getAuxiliary()[newX][newY] != Tileset.NOTHING
+                            && !currentPositions.contains(new Point(newX, newY))) {
+                        return false;
                     }
                 }
             }
         }
-        return valid;
+
+        return true;
     }
 
     /**
@@ -172,9 +219,11 @@ public class Movement {
         }
 
         if (canRotate(newShape)) {
+            Tetromino.clear(t, tetris.getBoard(), t.pos.x, t.pos.y);
             t.shape = newShape;
             t.height = t.shape[0].length;
             t.width = t.shape.length;
+            Tetromino.draw(t, tetris.getBoard(), t.pos.x, t.pos.y);
         }
     }
 }
